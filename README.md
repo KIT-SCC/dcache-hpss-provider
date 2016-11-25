@@ -1,7 +1,11 @@
-dCache Endit Provider
+dCache HPSS Provider
 ==============================================
 
-This [dCache] plugin interfaces with the [Endit] TSM integration system.
+This [dCache] plugin interfaces with HPSS. It expects the HPSS name space mounted
+locally for data transfer. Additionally pre-staging is off-loaded to a [TReqS2] server
+instances.
+
+## Installation
 
 To compile the plugin, run:
 
@@ -14,29 +18,13 @@ plugin directory (usually `/usr/local/share/dcache/plugins`).
 
 To use, define a nearline storage in the dCache admin interface:
 
-    hsm create osm the-hsm-name endit -directory=/path/to/endit/directory
+    hsm create osm <the-hsm-name> Dc2Hpss <options>
 
-The endit directory must be on the same file system as the pool's
-data directory.
-
-The above will create a provider that uses the JVMs file event
-notification feature which in most cases maps directly to a native
-file event notification facility of the operating system. 
-
-## Polling provider
-
-To use a provider that polls for changes, use:
-
-    hsm create osm osm the-hsm-name -directory=/path/to/endit/directory
-
-This provider accepts two additional options with the following default
-values:
-
-    -threads=1
-    -period=5000
-
-The first is the number of threads used for polling for file changes
-and the second is the poll period in milliseconds.
+Supported options:
+* `-mountpoint`: Where the HPSS name space is mounted locally.
+* `-treqs:server` : The server address of TReqS.
+* `-treqs:port` : The port for contacting TReqS (default=7676).
+* `-copies`: The number of parallel write and read transfers for the FUSE mount (default=5).
 
 [dCache]: http://www.dcache.org/
-[Endit]: https://github.com/maswan/endit
+[TReqs2]: https://gitlab.in2p3.fr/cc-in2p3-dev/treqs2

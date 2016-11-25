@@ -1,21 +1,4 @@
-/* dCache Endit Nearline Storage Provider
- *
- * Copyright (C) 2015 Gerd Behrmann
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package org.ndgf.endit;
+package de.gridka.dcache.nearline.hpss;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -24,10 +7,8 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import java.net.URI;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.dcache.pool.nearline.spi.FlushRequest;
@@ -96,13 +77,8 @@ public abstract class ListeningNearlineStorage implements NearlineStorage
                 tasks.remove(request.getId());
                 try {
                     request.completed(Uninterruptibles.getUninterruptibly(future));
-                } catch (ExecutionException | CancellationException e) {
-                    if (e.getCause() instanceof EnditException) {
-                        EnditException cause = (EnditException) e.getCause();
-                        request.failed(cause.getReturnCode(), cause.getMessage());
-                    } else {
-                        request.failed(e);
-                    }
+                } catch (Exception e) {
+                    request.failed(e);
                 }
             }
         }, MoreExecutors.directExecutor());
