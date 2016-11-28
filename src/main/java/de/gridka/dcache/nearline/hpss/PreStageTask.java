@@ -10,13 +10,13 @@ import com.google.common.util.concurrent.ListenableScheduledFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 
 public class PreStageTask extends AbstractFuture<Void> implements Runnable {
-  String treqs;
+  TReqS2 treqs;
   ListeningScheduledExecutorService poller;
   private ListenableScheduledFuture<?> future;
   private String hsmPath;
   private String requestId;
   
-  PreStageTask (String treqs, ListeningScheduledExecutorService poller, StageRequest request) {
+  PreStageTask (TReqS2 treqs, ListeningScheduledExecutorService poller, StageRequest request) {
     this.treqs = treqs;
     this.poller = poller;
     
@@ -29,14 +29,14 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
     sb.append('/' + pnfsId);
     this.hsmPath = sb.toString();
 
-    this.requestId = treqs + " requested";
+    this.requestId = treqs.initRecall(hsmPath);
   }
   
   public synchronized void run() {
     try {
       if (!isDone()) {
-          Boolean result = treqs.contains(hsmPath);
-          if (result) {
+          String status = treqs.getStatus(requestId);
+          if (status == "ENDED") {
               set(null);
           } else {
               future = poller.schedule(this, 2, TimeUnit.MINUTES);
@@ -51,7 +51,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
     if (isDone()) {
       return false;
     }
-    treqs = requestId + "canceled";
+    treqs.cancelRecall(hsmPath);
     future.cancel(true);
     return true;
   }
