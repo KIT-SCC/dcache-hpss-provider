@@ -155,4 +155,11 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     
     return Futures.transform(Futures.transform(Futures.transform(activation, allocation), prestaging), staging);
   }
+  
+  @Override
+  public void shutdown () {
+    mover.shutdown();
+    poller.shutdown();
+    cleaner.shutdown();
+  }
 }
