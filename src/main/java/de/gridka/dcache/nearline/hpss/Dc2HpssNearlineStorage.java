@@ -45,6 +45,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   private final String name;
   private volatile String mountpoint = null;
 //  private long period = 2; //minutes 
+  private TReqS2 treqs = null;
   private volatile ListeningExecutorService mover;
   private volatile ListeningExecutorService cleaner;
   private volatile ListeningScheduledExecutorService poller;
@@ -91,6 +92,14 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     }
 */
     
+    String treqsHost = properties.get("treqs");
+    if (treqsHost != null) {
+      this.treqs = new TReqS2(treqsHost);
+      LOGGER.trace("Created TReqS server {}.", treqsHost);
+    } else {
+      checkArgument(treqs != null, "treqs attribute is required!");
+    }
+      
     String copies = properties.getOrDefault("copies", "5");
     try {
       this.mover = new MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(Integer.parseInt(copies)));
@@ -121,7 +130,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   
   @Override
   public ListenableFuture<Set<Checksum>> stage(final StageRequest request) {
-    final PreStageTask preStageTask = new PreStageTask("treqs-server", getPoller(), request);
+    final PreStageTask preStageTask = new PreStageTask(treqs, getPoller(), request);
     final StageTask stageTask = new StageTask(request, mountpoint);
     
     ListenableFuture<Void> activation = request.activate();
