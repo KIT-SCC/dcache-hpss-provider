@@ -102,13 +102,13 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       
     String copies = properties.getOrDefault("copies", "5");
     try {
-      this.mover = new MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(Integer.parseInt(copies)));
+      this.mover = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(Integer.parseInt(copies)));
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("copies is not assigned an integer number!", e);
     }
     
-    this.cleaner = new MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
-    this.poller = new MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
+    this.cleaner = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
+    this.poller = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
   }
   
   @Override
@@ -143,7 +143,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply(Void ignored) throws Exception {
-          return poller.submit(preStageTask);
+          return poller.submit(preStageTask, ignored);
       }
     };
     AsyncFunction<Void, Set<Checksum>> staging = new AsyncFunction<Void, Set<Checksum>> () {
