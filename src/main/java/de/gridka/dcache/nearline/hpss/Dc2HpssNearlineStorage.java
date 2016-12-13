@@ -44,7 +44,6 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   private final String type;
   private final String name;
   private volatile String mountpoint = null;
-//  private long period = 2; //minutes 
   private TReqS2 treqs = null;
   private volatile ListeningExecutorService mover;
   private volatile ListeningExecutorService cleaner;
@@ -80,17 +79,6 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     } else {
       checkArgument(mountpoint != null, "mountpoint attribute is required!");
     }
-    
-/*
-    String prd = properties.get("period");
-    if (prd != null) {
-      try {
-        this.period = Integer.parseInt(prd);
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("period is not assigned an integer number!", e);
-      }
-    }
-*/
     
     String treqsHost = properties.get("treqs");
     if (treqsHost != null) {
