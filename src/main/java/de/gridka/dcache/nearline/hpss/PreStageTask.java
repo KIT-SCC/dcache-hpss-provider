@@ -1,6 +1,9 @@
 package de.gridka.dcache.nearline.hpss;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
+
+import javax.json.JsonObject;
 
 import org.dcache.pool.nearline.spi.StageRequest;
 import org.dcache.vehicles.FileAttributes;
@@ -8,6 +11,8 @@ import org.dcache.vehicles.FileAttributes;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableScheduledFuture;
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+
+import diskCacheV111.util.CacheException;
 
 public class PreStageTask extends AbstractFuture<Void> implements Runnable {
   TReqS2 treqs;
@@ -35,15 +40,27 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
   public synchronized void run() {
     try {
       if (!isDone()) {
-          String status = treqs.getStatus(requestId);
-          if (status == "ENDED") {
-              set(null);
-          } else {
-              future = poller.schedule(this, 2, TimeUnit.MINUTES);
+        JsonObject status = treqs.getStatus(requestId);
+        if (status.getString("status") == "ENDED") {
+          if (status.getString("substatus") == "FAILED") {
+            String error = status.getJsonObject("file").getString("error_message");
+            throw new CacheException(30, error);
+          } else if (status.getString("substatus") == "CANCELLED") {
+            throw new CancellationException("Request was cancelled by TReqS.");
+          } else if (status.getString("substatus") == "SUCCEEDED") {
+            set(null);
           }
+        } else {
+            future = poller.schedule(this, 2, TimeUnit.MINUTES);
+        }
       }
     } catch (Exception e) {
-        setException(e);
+      try {
+        this.cancel();
+      } catch (Exception suppressed) {
+        e.addSuppressed(suppressed);
+      }
+      setException(e);
     }
   }
   
