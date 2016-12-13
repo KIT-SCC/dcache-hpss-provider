@@ -33,8 +33,8 @@ class FlushTask implements Callable<Set<URI>> {
     
     this.hsmPath = String.format("%s/%s/%s/%s",
       fileAttributes.getStorageInfo().getKey("group"),
-      pnfsId.substring(0, 5),
-      pnfsId.charAt(5),
+      pnfsId.charAt(pnfsId.length() - 1),
+      pnfsId.charAt(pnfsId.length() - 2),
       pnfsId
     );
     this.externalPath = Paths.get(mountpoint, hsmPath);
