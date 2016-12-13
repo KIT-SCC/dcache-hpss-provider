@@ -31,7 +31,7 @@ class FlushTask implements Callable<Set<URI>> {
     String pnfsId = fileAttributes.getPnfsId().toString();
     this.path = request.getFile().toPath();
     
-    this.hsmPath = String.format("%s/%s/%s/%s",
+    this.hsmPath = String.format("/%s/%s/%s/%s",
       fileAttributes.getStorageInfo().getKey("group"),
       pnfsId.charAt(pnfsId.length() - 1),
       pnfsId.charAt(pnfsId.length() - 2),
