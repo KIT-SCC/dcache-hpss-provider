@@ -23,12 +23,13 @@ class StageTask implements Callable<Set<Checksum>> {
     String pnfsId = fileAttributes.getPnfsId().toString();
     this.path = request.getFile().toPath();
     
-    StringBuilder sb = new StringBuilder();
-    sb.append('/' + fileAttributes.getStorageInfo().getKey("store"));
-    sb.append('/' + pnfsId.substring(0, 5));
-    sb.append('/' + pnfsId.charAt(5));
-    sb.append('/' + pnfsId);
-    this.externalPath = Paths.get(mountpoint, sb.toString());
+    String hsmPath = String.format("/%s/%s/%s/%s",
+        fileAttributes.getStorageInfo().getKey("group"),
+        pnfsId.charAt(pnfsId.length() - 1),
+        pnfsId.charAt(pnfsId.length() - 2),
+        pnfsId
+      );
+    this.externalPath = Paths.get(mountpoint, hsmPath);
   }
   
   public Set<Checksum> call () throws CacheException {
