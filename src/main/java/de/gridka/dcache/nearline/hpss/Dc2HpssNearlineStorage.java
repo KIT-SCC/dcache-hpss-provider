@@ -80,9 +80,12 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       checkArgument(mountpoint != null, "mountpoint attribute is required!");
     }
     
-    String treqsHost = properties.get("treqs");
+    String treqsHost = properties.get("treqsHost");
+    String treqsPort = properties.getOrDefault("treqsPort", "8080");
+    String treqsUser = properties.getOrDefault("treqsUser", "treqs");
+    String treqsPassword = properties.getOrDefault("treqsPassword", "changeit");
     if (treqsHost != null) {
-      this.treqs = new TReqS2(treqsHost);
+      this.treqs = new TReqS2(treqsHost, treqsPort, treqsUser, treqsPassword);
       LOGGER.trace("Created TReqS server {}.", treqsHost);
     } else {
       checkArgument(treqs != null, "treqs attribute is required!");
