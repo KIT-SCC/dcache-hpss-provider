@@ -16,13 +16,23 @@ public class TReqS2 {
   TReqS2 (String server) {
     ClientConfig cfg = new DefaultClientConfig();
     Client client = Client.create(cfg);
-    this.server = client.resource(UriBuilder.fromUri("http://" + server + ":8080").build());
+    String serverUri = String.format("http://treqs:changeit@%s:8080/treqs2", server);
+    this.server = client.resource(UriBuilder.fromUri(serverUri).build());
   }
   
   TReqS2 (String server, String port) {
     ClientConfig cfg = new DefaultClientConfig();
     Client client = Client.create(cfg);
-    this.server = client.resource(UriBuilder.fromUri("http://" + server + ":" + port).build());
+    String serverUri = String.format("http://treqs:changeit@%s:%s/treqs2", server, port);
+    this.server = client.resource(UriBuilder.fromUri(serverUri).build());
+    // Securing the connection: https://jersey.java.net/documentation/latest/client.html#d0e5229
+  }
+  
+  TReqS2 (String server, String port, String user, String password) {
+    ClientConfig cfg = new DefaultClientConfig();
+    Client client = Client.create(cfg);
+    String serverUri = String.format("http://%s:%s@%s:%s/treqs2", user, password, server, port);
+    this.server = client.resource(UriBuilder.fromUri(serverUri).build());
     // Securing the connection: https://jersey.java.net/documentation/latest/client.html#d0e5229
   }
   
