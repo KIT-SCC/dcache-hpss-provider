@@ -27,12 +27,12 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
     
     FileAttributes fileAttributes = request.getFileAttributes();
     String pnfsId = fileAttributes.getPnfsId().toString();
-    StringBuilder sb = new StringBuilder();
-    sb.append('/' + fileAttributes.getStorageInfo().getKey("group"));
-    sb.append('/' + pnfsId.substring(0, 5));
-    sb.append('/' + pnfsId.charAt(5));
-    sb.append('/' + pnfsId);
-    this.hsmPath = sb.toString();
+    this.hsmPath = String.format("%s/%s/%s/%s",
+        fileAttributes.getStorageInfo().getKey("group"),
+        pnfsId.substring(0, 5),
+        pnfsId.charAt(5),
+        pnfsId
+      );
 
     this.requestId = treqs.initRecall(hsmPath);
   }

@@ -31,12 +31,12 @@ class FlushTask implements Callable<Set<URI>> {
     String pnfsId = fileAttributes.getPnfsId().toString();
     this.path = request.getFile().toPath();
     
-    StringBuilder sb = new StringBuilder();
-    sb.append('/' + fileAttributes.getStorageInfo().getKey("group"));
-    sb.append('/' + pnfsId.substring(0, 5));
-    sb.append('/' + pnfsId.charAt(5));
-    sb.append('/' + pnfsId);
-    this.hsmPath = sb.toString();
+    this.hsmPath = String.format("%s/%s/%s/%s",
+      fileAttributes.getStorageInfo().getKey("group"),
+      pnfsId.substring(0, 5),
+      pnfsId.charAt(5),
+      pnfsId
+    );
     this.externalPath = Paths.get(mountpoint, hsmPath);
   }
   
