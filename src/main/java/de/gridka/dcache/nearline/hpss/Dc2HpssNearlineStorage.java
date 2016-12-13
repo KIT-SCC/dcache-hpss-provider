@@ -88,7 +88,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       this.treqs = new TReqS2(treqsHost, treqsPort, treqsUser, treqsPassword);
       LOGGER.trace("Created TReqS server {}.", treqsHost);
     } else {
-      checkArgument(treqs != null, "treqs attribute is required!");
+      checkArgument(treqs != null, "treqsHost attribute is required!");
     }
       
     String copies = properties.getOrDefault("copies", "5");
