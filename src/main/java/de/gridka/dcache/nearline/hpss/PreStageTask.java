@@ -28,7 +28,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
     FileAttributes fileAttributes = request.getFileAttributes();
     String pnfsId = fileAttributes.getPnfsId().toString();
     StringBuilder sb = new StringBuilder();
-    sb.append('/' + fileAttributes.getStorageInfo().getKey("store"));
+    sb.append('/' + fileAttributes.getStorageInfo().getKey("group"));
     sb.append('/' + pnfsId.substring(0, 5));
     sb.append('/' + pnfsId.charAt(5));
     sb.append('/' + pnfsId);

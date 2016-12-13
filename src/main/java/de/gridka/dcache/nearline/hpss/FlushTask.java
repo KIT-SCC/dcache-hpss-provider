@@ -32,7 +32,7 @@ class FlushTask implements Callable<Set<URI>> {
     this.path = request.getFile().toPath();
     
     StringBuilder sb = new StringBuilder();
-    sb.append('/' + fileAttributes.getStorageInfo().getKey("store"));
+    sb.append('/' + fileAttributes.getStorageInfo().getKey("group"));
     sb.append('/' + pnfsId.substring(0, 5));
     sb.append('/' + pnfsId.charAt(5));
     sb.append('/' + pnfsId);
