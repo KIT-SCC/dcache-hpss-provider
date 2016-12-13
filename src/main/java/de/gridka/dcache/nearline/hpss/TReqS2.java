@@ -34,11 +34,10 @@ public class TReqS2 {
         .getString("id");
   }
 
-  public String getStatus (String requestId) {
+  public JsonObject getStatus (String requestId) {
     return server.path("staging").path("request")
         .path(requestId)
-        .post(JsonObject.class)
-        .getString("status");
+        .post(JsonObject.class);
   }
 
   public void cancelRecall (String hsmPath) {
