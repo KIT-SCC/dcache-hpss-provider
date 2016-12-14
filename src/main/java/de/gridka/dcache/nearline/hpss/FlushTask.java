@@ -13,10 +13,13 @@ import java.util.concurrent.Callable;
 
 import org.dcache.pool.nearline.spi.FlushRequest;
 import org.dcache.vehicles.FileAttributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import diskCacheV111.util.CacheException;
 
 class FlushTask implements Callable<Set<URI>> {
+  private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
   private String type;
   private String name;
   private Path path;
@@ -24,6 +27,7 @@ class FlushTask implements Callable<Set<URI>> {
   private String hsmPath;
   
   public FlushTask(String type, String name, FlushRequest request, String mountpoint) {
+    LOGGER.trace(String.format("Create new FlushTask for %s.", request.toString()));
     this.type = type;
     this.name = name;
     
@@ -38,16 +42,19 @@ class FlushTask implements Callable<Set<URI>> {
       pnfsId
     );
     this.externalPath = Paths.get(mountpoint, hsmPath);
+    LOGGER.trace(String.format("FlushTask %s has to copy %s to %s.", request.toString(), path, externalPath));
   }
   
   public Set<URI> call () throws CacheException, URISyntaxException {
     try {
+      LOGGER.debug(String.format("Copy %s to %s.", path, externalPath));
       Files.copy(path, externalPath, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
       throw new CacheException(2, "Copy to " + externalPath.toString() + " failed.", e);
     }
     
     URI uri = new URI(type, name, hsmPath, null, null);
+    LOGGER.debug(String.format("Return after successful copy of %s to %s: %s", path, externalPath, uri.toString()));
     return Collections.singleton(uri);
   }
 }
