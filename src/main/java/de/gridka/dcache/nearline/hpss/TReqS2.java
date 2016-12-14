@@ -57,7 +57,7 @@ public class TReqS2 {
     LOGGER.debug(String.format("Query status for request '%s'", requestId));
     return server.path("staging").path("request")
         .path(requestId)
-        .post(JsonObject.class);
+        .get(JsonObject.class);
   }
 
   public void cancelRecall (String hsmPath) {
