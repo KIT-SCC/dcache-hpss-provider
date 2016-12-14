@@ -124,23 +124,27 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     final PreStageTask preStageTask = new PreStageTask(treqs, getPoller(), request);
     final StageTask stageTask = new StageTask(request, mountpoint);
     
+    LOGGER.debug("Activating request " + request.toString());
     ListenableFuture<Void> activation = request.activate();
     AsyncFunction<Void, Void> allocation = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply(Void ignored) throws Exception {
-          return request.allocate();
+        LOGGER.debug("Allocating space for " + request.toString());
+        return request.allocate();
       }
     };
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply(Void ignored) throws Exception {
-          return poller.submit(preStageTask, ignored);
+        LOGGER.debug("Submitting pre-stage request for " + request.toString());
+        return poller.submit(preStageTask, ignored);
       }
     };
     AsyncFunction<Void, Set<Checksum>> staging = new AsyncFunction<Void, Set<Checksum>> () {
       @Override
       public ListenableFuture<Set<Checksum>> apply(Void ignored) throws Exception {
-          return mover.submit(stageTask);
+        LOGGER.debug("Submitting stage request for " + request.toString());
+        return mover.submit(stageTask);
       }
     };
     
