@@ -1,5 +1,6 @@
 package de.gridka.dcache.nearline.hpss;
 
+import javax.json.Json;
 import javax.json.JsonObject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
@@ -42,10 +43,11 @@ public class TReqS2 {
   
   public String initRecall (String hsmPath) {
     LOGGER.debug(String.format("Send stage request for %s to TReqS.", hsmPath));
+    JsonObject input = Json.createObjectBuilder().add("file", hsmPath).build();
     JsonObject reply = server.path("staging").path("request")
-        .entity("{file:" + hsmPath + "}", MediaType.APPLICATION_JSON)
+        .type(MediaType.APPLICATION_JSON)
         .accept(MediaType.APPLICATION_JSON_TYPE)
-        .post(JsonObject.class);
+        .post(JsonObject.class, input);
     LOGGER.debug(String.format("TReqS created request for %s with id '%s'.", hsmPath, reply.getString("id")));
     
     return reply.getString("id");
