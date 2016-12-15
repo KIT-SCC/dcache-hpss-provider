@@ -109,11 +109,9 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   
   @Override
   public ListenableFuture<Set<Checksum>> stage(final StageRequest request) {
-    final PreStageTask preStageTask = new PreStageTask(treqs, getPoller(), request);
-    final StageTask stageTask = new StageTask(request, mountpoint);
-    
     LOGGER.debug("Activating request " + request.toString());
     ListenableFuture<Void> activation = request.activate();
+    
     AsyncFunction<Void, Void> allocation = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply(Void ignored) throws Exception {
@@ -121,18 +119,20 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
         return request.allocate();
       }
     };
+    
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
-      public ListenableFuture<Void> apply(Void ignored) throws Exception {
+      public ListenableFuture<Void> apply(Void ignored) throws CacheException {
         LOGGER.debug("Submitting pre-stage request for " + request.toString());
-        return poller.submit(preStageTask, ignored);
+        return poller.submit(new PreStageTask(treqs, getPoller(), request), ignored);
       }
     };
+    
     AsyncFunction<Void, Set<Checksum>> staging = new AsyncFunction<Void, Set<Checksum>> () {
       @Override
       public ListenableFuture<Set<Checksum>> apply(Void ignored) throws Exception {
         LOGGER.debug("Submitting stage request for " + request.toString());
-        return mover.submit(stageTask);
+        return mover.submit(new StageTask(request, mountpoint));
       }
     };
     

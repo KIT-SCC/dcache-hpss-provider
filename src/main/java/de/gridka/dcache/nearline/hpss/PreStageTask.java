@@ -24,7 +24,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
   private String hsmPath;
   private String requestId;
   
-  PreStageTask (TReqS2 treqs, ListeningScheduledExecutorService poller, StageRequest request) {
+  PreStageTask (TReqS2 treqs, ListeningScheduledExecutorService poller, StageRequest request) throws CacheException {
     LOGGER.trace(String.format("Create new PreStageTask for %s.", request.toString()));
     this.treqs = treqs;
     this.poller = poller;
