@@ -65,7 +65,6 @@ public class TReqS2 {
     JsonObject input = Json.createObjectBuilder().add("file", hsmPath).build();
     Response response = server.path("staging").path("request")
         .request(MediaType.APPLICATION_JSON)
-        .accept(MediaType.APPLICATION_JSON_TYPE)
         .post(Entity.json(input));
     if (response.getStatus() != 200) {
       throw new CacheException(String.format("Failed to initialize recall for %s with TReqS.", hsmPath));
@@ -86,6 +85,6 @@ public class TReqS2 {
   public void cancelRecall (String hsmPath) {
     LOGGER.debug(String.format("Cancel TReqS requests for %s.", hsmPath));
     server.path("staging").path("file").path(hsmPath)
-        .request(MediaType.WILDCARD).delete();
+        .request(MediaType.APPLICATION_JSON).delete();
   }
 }
