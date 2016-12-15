@@ -34,23 +34,6 @@ public class TReqS2 {
   
   WebTarget server;
   
-  TReqS2 (String server) {
-    ClientConfig cfg = new ClientConfig();
-    cfg.register(new LoggingFeature(new JulFacade()));
-    Client client = ClientBuilder.newClient();
-    String serverUri = String.format("http://treqs:changeit@%s:8080/treqs2", server);
-    this.server = client.target(UriBuilder.fromUri(serverUri).build());
-  }
-  
-  TReqS2 (String server, String port) {
-    ClientConfig cfg = new ClientConfig();
-    cfg.register(new LoggingFeature(new JulFacade()));
-    Client client = ClientBuilder.newClient();
-    String serverUri = String.format("http://treqs:changeit@%s:%s/treqs2", server, port);
-    this.server = client.target(UriBuilder.fromUri(serverUri).build());
-    // Securing the connection: https://jersey.java.net/documentation/latest/client.html#d0e5229
-  }
-  
   TReqS2 (String server, String port, String user, String password) {
     ClientConfig cfg = new ClientConfig();
     cfg.register(new LoggingFeature(new JulFacade()));
