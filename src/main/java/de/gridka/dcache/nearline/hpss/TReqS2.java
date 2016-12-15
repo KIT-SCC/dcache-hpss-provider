@@ -67,7 +67,7 @@ public class TReqS2 {
         .request(MediaType.APPLICATION_JSON)
         .post(Entity.json(input));
     if (response.getStatus() != 200) {
-      throw new CacheException(String.format("Failed to initialize recall for %s with TReqS.", hsmPath));
+      throw new CacheException(String.format("Failed to initialize recall for %s with TReqS.\n%s", hsmPath, response.getStatusInfo()));
     }
     String id = response.readEntity(JsonObject.class).getString("id");
     LOGGER.debug(String.format("TReqS created request for %s with id '%s'.", hsmPath, id));
