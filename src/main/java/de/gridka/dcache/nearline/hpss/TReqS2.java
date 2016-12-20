@@ -11,6 +11,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +38,9 @@ public class TReqS2 {
   TReqS2 (String server, String port, String user, String password) {
     ClientConfig cfg = new ClientConfig();
     cfg.register(new LoggingFeature(new JulFacade()));
+    cfg.register(HttpAuthenticationFeature.basic(user, password));
     Client client = ClientBuilder.newClient();
-    String serverUri = String.format("http://%s:%s@%s:%s/treqs2", user, password, server, port);
+    String serverUri = String.format("http://%s:%s/treqs2", server, port);
     this.server = client.target(UriBuilder.fromUri(serverUri).build());
     // Securing the connection: https://jersey.java.net/documentation/latest/client.html#d0e5229
   }
