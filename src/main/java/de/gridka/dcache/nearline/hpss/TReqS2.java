@@ -1,5 +1,7 @@
 package de.gridka.dcache.nearline.hpss;
 
+import java.util.logging.Level;
+
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.ws.rs.client.Client;
@@ -37,7 +39,7 @@ public class TReqS2 {
   
   TReqS2 (String server, String port, String user, String password) {
     ClientConfig cfg = new ClientConfig();
-    cfg.register(new LoggingFeature(new JulFacade()));
+    cfg.register(new LoggingFeature(new JulFacade(), Level.ALL, LoggingFeature.Verbosity.HEADERS_ONLY, null));
     cfg.register(HttpAuthenticationFeature.basic(user, password));
     Client client = ClientBuilder.newClient();
     String serverUri = String.format("http://%s:%s/treqs2", server, port);
