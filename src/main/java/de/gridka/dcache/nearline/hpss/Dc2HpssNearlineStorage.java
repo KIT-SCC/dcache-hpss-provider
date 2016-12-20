@@ -141,6 +141,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   
   @Override
   public void shutdown () {
+    treqs.disconnect();
     mover.shutdown();
     poller.shutdown();
     cleaner.shutdown();

@@ -3,7 +3,7 @@ package de.gridka.dcache.nearline.hpss;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 
-import javax.json.JsonObject;
+import org.json.JSONObject;
 
 import org.dcache.pool.nearline.spi.StageRequest;
 import org.dcache.vehicles.FileAttributes;
@@ -47,17 +47,18 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
     try {
       if (!isDone()) {
         LOGGER.debug(String.format("Query status for %s.", requestId));
-        JsonObject status = treqs.getStatus(requestId);
-        if (status.getString("status") == "ENDED") {
+        JSONObject status = treqs.getStatus(requestId);
+        if (status != null && status.getString("status") == "ENDED") {
           LOGGER.debug(String.format("Request %s has ENDED.", requestId));
-          if (status.getString("substatus") == "FAILED") {
+          String subStatus = status.getString("substatus");
+          if (subStatus == "FAILED") {
             LOGGER.debug(String.format("Request %s has FAILED.", requestId));
-            String error = status.getJsonObject("file").getString("error_message");
+            String error = status.getJSONObject("file").getString("error_message");
             throw new CacheException(30, error);
-          } else if (status.getString("substatus") == "CANCELLED") {
+          } else if (subStatus == "CANCELLED") {
             LOGGER.debug(String.format("Request %s was CANCELLED.", requestId));
             throw new CancellationException("Request was cancelled by TReqS.");
-          } else if (status.getString("substatus") == "SUCCEEDED") {
+          } else if (subStatus == "SUCCEEDED") {
             LOGGER.debug(String.format("Request %s was SUCCESSFUL.", requestId));
             set(null);
           }
