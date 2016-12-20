@@ -29,6 +29,7 @@ public class TReqS2 {
     try {
       response = Unirest.post(treqsStaging + "/request")
           .header("accept", "application/json")
+          .header("Content-Type", "application/json")
           .field("file", hsmPath)
           .asJson();
     } catch (UnirestException e) {
