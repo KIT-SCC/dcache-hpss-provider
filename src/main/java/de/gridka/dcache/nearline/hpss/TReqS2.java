@@ -35,7 +35,7 @@ public class TReqS2 {
     } catch (UnirestException e) {
       throw new CacheException(String.format("Submit recall for %s to TReqS failed.", hsmPath), e);
     }
-    if (response.getStatus() != 200) {
+    if (response.getStatus() < 200 || response.getStatus() > 299) {
       throw new CacheException(String.format("Failed to initialize recall for %s with TReqS.\n%s", hsmPath, response.getStatusText()));
     }
     String id = response.getBody().getObject().getString("id");
