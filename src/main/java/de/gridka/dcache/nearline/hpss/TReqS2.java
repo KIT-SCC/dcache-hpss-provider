@@ -25,13 +25,12 @@ public class TReqS2 {
   
   public String initRecall (String hsmPath) throws CacheException {
     LOGGER.debug(String.format("Send stage request for %s to TReqS.", hsmPath));
-    JSONObject input = new JSONObject().append("file", hsmPath);
     HttpResponse<JsonNode> response;
     try {
       response = Unirest.post(treqsStaging + "/request")
           .header("accept", "application/json")
           .header("Content-Type", "application/json")
-          .body(input.toString())
+          .body(String.format("{\"file\":\"%s\"}", hsmPath))
           .asJson();
     } catch (UnirestException e) {
       throw new CacheException(String.format("Submit recall for %s to TReqS failed.", hsmPath), e);
