@@ -56,14 +56,14 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   }
   
   @Override
-  public synchronized void configure(Map<String, String> properties) throws IllegalArgumentException {
-    LOGGER.trace("Configuring HSM interface '{}' with type '{}'.", name, type);
+  public synchronized void configure (Map<String, String> properties) throws IllegalArgumentException {
+    LOGGER.debug("Configuring HSM interface '{}' with type '{}'.", name, type);
 
     String mnt = properties.get("mountpoint");
     if (mnt != null) {
       checkArgument(Files.isDirectory(Paths.get(mnt)), mnt + " is not a directory!");
       this.mountpoint = mnt;
-      LOGGER.trace("Set mountpoint to {}.", mnt);
+      LOGGER.debug("Set mountpoint to {}.", mnt);
     } else {
       checkArgument(mountpoint != null, "mountpoint attribute is required!");
     }
@@ -74,7 +74,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     String treqsPassword = properties.getOrDefault("treqsPassword", "changeit");
     if (treqsHost != null) {
       this.treqs = new TReqS2(treqsHost, treqsPort, treqsUser, treqsPassword);
-      LOGGER.trace("Created TReqS server {}.", treqsHost);
+      LOGGER.debug("Created TReqS server {}.", treqsHost);
     } else {
       checkArgument(treqs != null, "treqsHost attribute is required!");
     }
@@ -91,16 +91,16 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   }
   
   @Override
-  public ListenableFuture<Void> remove(final RemoveRequest request) {
+  public ListenableFuture<Void> remove (final RemoveRequest request) {
     return getCleaner().submit(new RemoveTask(request, mountpoint));
   }
   
   @Override
-  public ListenableFuture<Set<URI>> flush(final FlushRequest request) {
+  public ListenableFuture<Set<URI>> flush (final FlushRequest request) {
     final FlushTask task = new FlushTask(type, name, request, mountpoint);
     return Futures.transform(request.activate(),
         new AsyncFunction<Void, Set<URI>> () {
-          public ListenableFuture<Set<URI>> apply(Void ignored) throws CacheException, URISyntaxException {
+          public ListenableFuture<Set<URI>> apply (Void ignored) throws CacheException, URISyntaxException {
             return getMover().submit(task);
           }
         }
@@ -108,13 +108,13 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   }
   
   @Override
-  public ListenableFuture<Set<Checksum>> stage(final StageRequest request) {
+  public ListenableFuture<Set<Checksum>> stage (final StageRequest request) {
     LOGGER.debug("Activating request " + request.toString());
     ListenableFuture<Void> activation = request.activate();
     
     AsyncFunction<Void, Void> allocation = new AsyncFunction<Void, Void> () {
       @Override
-      public ListenableFuture<Void> apply(Void ignored) throws Exception {
+      public ListenableFuture<Void> apply (Void ignored) throws Exception {
         LOGGER.debug("Allocating space for " + request.toString());
         return request.allocate();
       }
@@ -122,17 +122,17 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
-      public ListenableFuture<Void> apply(Void ignored) throws CacheException {
+      public ListenableFuture<Void> apply (Void ignored) throws CacheException {
         LOGGER.debug("Submitting pre-stage request for " + request.toString());
-        return poller.submit(new PreStageTask(treqs, getPoller(), request), ignored);
+        return getPoller().submit(new PreStageTask(treqs, getPoller(), request), ignored);
       }
     };
     
     AsyncFunction<Void, Set<Checksum>> staging = new AsyncFunction<Void, Set<Checksum>> () {
       @Override
-      public ListenableFuture<Set<Checksum>> apply(Void ignored) throws Exception {
+      public ListenableFuture<Set<Checksum>> apply (Void ignored) throws Exception {
         LOGGER.debug("Submitting stage request for " + request.toString());
-        return mover.submit(new StageTask(request, mountpoint));
+        return getMover().submit(new StageTask(request, mountpoint));
       }
     };
     

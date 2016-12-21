@@ -25,7 +25,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
   private String requestId;
   
   PreStageTask (TReqS2 treqs, ListeningScheduledExecutorService poller, StageRequest request) throws CacheException {
-    LOGGER.trace(String.format("Create new PreStageTask for %s.", request.toString()));
+    LOGGER.debug(String.format("Create new PreStageTask for %s.", request.toString()));
     this.treqs = treqs;
     this.poller = poller;
     
@@ -50,7 +50,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
         JSONObject status = treqs.getStatus(requestId);
         if (status != null && status.getString("status") == "ENDED") {
           LOGGER.debug(String.format("Request %s has ENDED.", requestId));
-          String subStatus = status.getString("substatus");
+          String subStatus = status.getString("sub_status");
           if (subStatus == "FAILED") {
             LOGGER.debug(String.format("Request %s has FAILED.", requestId));
             String error = status.getJSONObject("file").getString("error_message");
@@ -63,7 +63,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
             set(null);
           }
         } else {
-          LOGGER.debug(String.format("Request %s is rescheduled.", requestId));
+          LOGGER.debug(String.format("Request %s is in status %s and will be rescheduled.", requestId, status.getString("status")));
           future = poller.schedule(this, 2, TimeUnit.MINUTES);
         }
       }

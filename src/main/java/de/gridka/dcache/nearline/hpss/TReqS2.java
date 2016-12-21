@@ -1,7 +1,6 @@
 package de.gridka.dcache.nearline.hpss;
 
 import java.io.IOException;
-import java.util.logging.Level;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -17,10 +16,14 @@ import diskCacheV111.util.CacheException;
 public class TReqS2 {
   private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
   private String treqsStaging;
+  private String user;
+  private String password;
   
   TReqS2 (String server, String port, String user, String password) {
-    this.treqsStaging = String.format("http://%s:%s@%s:%s/treqs2/staging", user, password, server, port);
-    LOGGER.trace("Generated TReqS connectivity string %s", treqsStaging);
+    this.treqsStaging = String.format("http://%s:%s/treqs2/staging", server, port);
+    this.user = user;
+    this.password = password;
+    LOGGER.debug("Generated TReqS connectivity string %s", treqsStaging);
   }
   
   public String initRecall (String hsmPath) throws CacheException {
@@ -28,6 +31,7 @@ public class TReqS2 {
     HttpResponse<JsonNode> response;
     try {
       response = Unirest.post(treqsStaging + "/request")
+          .basicAuth(user, password)
           .header("accept", "application/json")
           .header("Content-Type", "application/json")
           .body(String.format("{\"file\":\"%s\"}", hsmPath))
@@ -47,7 +51,10 @@ public class TReqS2 {
   public JSONObject getStatus (String requestId) {
     LOGGER.debug(String.format("Query status for request '%s'", requestId));
     try {
-      return Unirest.get(treqsStaging + "/request/" + requestId).asJson().getBody().getObject();
+      return Unirest.get(treqsStaging + "/request/" + requestId)
+          .basicAuth(user, password)
+          .header("accept", "application/json")
+          .asJson().getBody().getObject();
     } catch (UnirestException e) {
       LOGGER.error(String.format("Query status of %s failed", requestId), e);
       return null;
@@ -56,7 +63,7 @@ public class TReqS2 {
 
   public void cancelRecall (String hsmPath) {
     LOGGER.debug(String.format("Cancel TReqS requests for %s.", hsmPath));
-    Unirest.delete(treqsStaging + "/file/" + hsmPath);
+    Unirest.delete(treqsStaging + "/file/" + hsmPath).basicAuth(user, password);
   }
   
   public void disconnect () {
