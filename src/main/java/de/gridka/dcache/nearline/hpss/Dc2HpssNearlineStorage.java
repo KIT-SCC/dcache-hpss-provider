@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 import org.dcache.pool.nearline.spi.FlushRequest;
@@ -128,15 +129,13 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
-    AsyncFunction<Void, Set<Checksum>> staging = new AsyncFunction<Void, Set<Checksum>> () {
-      @Override
-      public ListenableFuture<Set<Checksum>> apply (Void ignored) throws Exception {
-        LOGGER.debug("Submitting stage request for " + request.toString());
-        return getMover().submit(new StageTask(request, mountpoint));
-      }
-    };
-    
-    return Futures.transform(Futures.transform(Futures.transform(activation, allocation), prestaging), staging);
+    try {
+      Futures.transform(Futures.transform(activation, allocation), prestaging).get();
+    } catch (InterruptedException | ExecutionException e) {
+      LOGGER.error("Prestaging failed.", new Throwable(e));
+      return Futures.immediateFailedFuture(new Throwable(e));
+    }
+    return getMover().submit(new StageTask(request, mountpoint));
   }
   
   @Override
