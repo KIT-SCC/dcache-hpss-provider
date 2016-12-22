@@ -1,10 +1,9 @@
 package de.gridka.dcache.nearline.hpss;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
-
 import org.dcache.pool.nearline.spi.StageRequest;
 import org.dcache.vehicles.FileAttributes;
 import org.slf4j.Logger;
@@ -12,22 +11,19 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableScheduledFuture;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 
 import diskCacheV111.util.CacheException;
 
-public class PreStageTask extends AbstractFuture<Void> implements Runnable {
+public class PreStageTask extends AbstractFuture<Void> implements Callable<Boolean> {
   private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
   TReqS2 treqs;
-  ListeningScheduledExecutorService poller;
   private ListenableScheduledFuture<?> future;
   private String hsmPath;
   private String requestId;
   
-  PreStageTask (TReqS2 treqs, ListeningScheduledExecutorService poller, StageRequest request) throws CacheException {
+  PreStageTask (TReqS2 treqs, StageRequest request) throws CacheException {
     LOGGER.debug("Create new PreStageTask for {}.", request.toString());
     this.treqs = treqs;
-    this.poller = poller;
     
     FileAttributes fileAttributes = request.getFileAttributes();
     String pnfsId = fileAttributes.getPnfsId().toString();
@@ -43,7 +39,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
     LOGGER.debug("Received %s for PreStageTask of {}", requestId, hsmPath);
   }
   
-  public synchronized void run() {
+  public synchronized Boolean call () {
     try {
       if (!isDone()) {
         LOGGER.debug("Query status for {}.", requestId);
@@ -61,11 +57,11 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
               throw new CancellationException("Request was cancelled by TReqS.");
             case "SUCCEEDED":
               LOGGER.debug("Request {} was SUCCESSFUL.", requestId);
-              set(null);
+              return true;
           }
         } else {
-          LOGGER.debug("Request {} is in status{} and will be rescheduled.", requestId, status.getString("status"));
-          future = poller.schedule(this, 2, TimeUnit.MINUTES);
+          LOGGER.debug("Request {} is in status {} and will be rescheduled.", requestId, status.getString("status"));
+          return false;
         }
       }
     } catch (Exception e) {
@@ -77,6 +73,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
       }
       setException(e);
     }
+    return false;
   }
   
   public synchronized boolean cancel () {

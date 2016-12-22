@@ -17,8 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.dcache.pool.nearline.spi.FlushRequest;
 import org.dcache.pool.nearline.spi.RemoveRequest;
@@ -37,6 +39,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   private volatile ListeningExecutorService mover;
   private volatile ListeningExecutorService cleaner;
   private volatile ListeningScheduledExecutorService poller;
+  private int period;
 
   public Dc2HpssNearlineStorage(String type, String name)
   {
@@ -87,6 +90,14 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       throw new IllegalArgumentException("copies is not assigned an integer number!", e);
     }
     
+    // A default 2 minute delay for scheduled tasks on poller.
+    String delay = properties.getOrDefault("period", "2");
+    try {
+      this.period = Integer.parseInt(delay);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("period is not assigned an integer number!", e);
+    }
+    
     this.cleaner = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
     this.poller = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
   }
@@ -125,7 +136,21 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       @Override
       public ListenableFuture<Void> apply (Void ignored) throws CacheException {
         LOGGER.debug("Submitting pre-stage request for {}", request.toString());
-        return getPoller().submit(new PreStageTask(treqs, getPoller(), request), ignored);
+        final PreStageTask task = new PreStageTask(treqs, request);
+        return Futures.transform(getPoller().submit(task),
+            new AsyncFunction<Boolean, Void> () {
+              @Override
+              public ListenableFuture<Void> apply (Boolean completed) {
+                if (completed) {
+                  LOGGER.debug("Pre-staging completed for {}", request.toString());
+                  return Futures.immediateFuture(null);
+                } else {
+                  LOGGER.debug("Rescheduling pre-stage request for {}", request.toString());
+                  return Futures.transform(getPoller().schedule(task, period, TimeUnit.MINUTES), this);
+                }
+              }
+            }
+        );
       }
     };
     
