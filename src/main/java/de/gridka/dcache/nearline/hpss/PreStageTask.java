@@ -48,19 +48,20 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
       if (!isDone()) {
         LOGGER.debug("Query status for {}.", requestId);
         JSONObject status = treqs.getStatus(requestId);
-        if (status != null && status.getString("status") == "ENDED") {
+        if (status != null && status.getString("status").equals("ENDED")) {
           LOGGER.debug("Request {} has ENDED.", requestId);
           String subStatus = status.getString("sub_status");
-          if (subStatus == "FAILED") {
-            LOGGER.debug("Request {} has FAILED.", requestId);
-            String error = status.getJSONObject("file").getString("error_message");
-            throw new CacheException(30, error);
-          } else if (subStatus == "CANCELLED") {
-            LOGGER.debug("Request {} was CANCELLED.", requestId);
-            throw new CancellationException("Request was cancelled by TReqS.");
-          } else if (subStatus == "SUCCEEDED") {
-            LOGGER.debug("Request {} was SUCCESSFUL.", requestId);
-            set(null);
+          switch (subStatus) {
+            case "FAILED":
+              LOGGER.debug("Request {} has FAILED.", requestId);
+              String error = status.getJSONObject("file").getString("error_message");
+              throw new CacheException(30, error);
+            case "CANCELLED":
+              LOGGER.debug("Request {} was CANCELLED.", requestId);
+              throw new CancellationException("Request was cancelled by TReqS.");
+            case "SUCCEEDED":
+              LOGGER.debug("Request {} was SUCCESSFUL.", requestId);
+              set(null);
           }
         } else {
           LOGGER.debug("Request {} is in status{} and will be rescheduled.", requestId, status.getString("status"));
