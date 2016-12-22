@@ -35,8 +35,8 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   private volatile String mountpoint = null;
   private TReqS2 treqs = null;
   private volatile ListeningExecutorService mover;
-  private volatile ListeningExecutorService cleaner;
-  private volatile ListeningScheduledExecutorService poller;
+  private volatile ListeningExecutorService cleaner = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
+  private volatile ListeningScheduledExecutorService poller = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
   private int period;
 
   public Dc2HpssNearlineStorage(String type, String name)
@@ -84,8 +84,6 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       throw new IllegalArgumentException("period is not assigned an integer number!", e);
     }
     
-    this.cleaner = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
-    this.poller = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
   }
   
   @Override

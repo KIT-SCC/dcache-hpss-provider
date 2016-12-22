@@ -36,7 +36,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
 
     LOGGER.debug("PreStageTask for {} has to bring online {}.", request.toString(), hsmPath);
     this.requestId = treqs.initRecall(hsmPath);
-    LOGGER.debug("Received %s for PreStageTask of {}", requestId, hsmPath);
+    LOGGER.debug("Received {} for PreStageTask of {}", requestId, hsmPath);
   }
   
   public synchronized Boolean call () {
