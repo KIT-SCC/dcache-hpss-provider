@@ -108,7 +108,9 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   @Override
   public ListenableFuture<Set<Checksum>> stage (final StageRequest request) {
     LOGGER.debug("Activating request {}", request.toString());
+    // Signal the activation of the StageRequest to dCache.
     ListenableFuture<Void> activation = request.activate();
+    // Initialize the pre-staging.
     PreStageTask task;
     try {
       task = new PreStageTask(treqs, request);
@@ -117,6 +119,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       return Futures.immediateFailedFuture(e);
     }
     
+    // Asynchronously allocate the disk space for the staging in dCache. 
     AsyncFunction<Void, Void> allocation = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply (Void ignored) throws Exception {
@@ -125,6 +128,8 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
+    // Check on the PreStageTask - when it is completed, return immediately,
+    // otherwise schedule another recheck.
     AsyncFunction<Boolean, Void> recheck = new AsyncFunction<Boolean, Void> () {
       @Override
       public ListenableFuture<Void> apply (Boolean completed) {
@@ -138,6 +143,8 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
+    // Encapsulate the first and subsequent checks on the PreStageTask,
+    // so we can chain staging after it.
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply (Void ignored) throws CacheException {
@@ -147,6 +154,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
+    // Once the pre-staging is done, stage the file into the pool's inventory.
     AsyncFunction<Void, Set<Checksum>> staging = new AsyncFunction<Void, Set<Checksum>> () {
       @Override
       public ListenableFuture<Set<Checksum>> apply (Void ignored) throws Exception {
