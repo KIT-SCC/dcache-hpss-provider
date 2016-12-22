@@ -121,6 +121,13 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   public ListenableFuture<Set<Checksum>> stage (final StageRequest request) {
     LOGGER.debug("Activating request {}", request.toString());
     ListenableFuture<Void> activation = request.activate();
+    PreStageTask task;
+    try {
+      task = new PreStageTask(treqs, request);
+    } catch (CacheException e) {
+      LOGGER.error("Creating the PreStageTask for " + request + " failed.", e);
+      return Futures.immediateFailedFuture(e);
+    }
     
     AsyncFunction<Void, Void> allocation = new AsyncFunction<Void, Void> () {
       @Override
@@ -130,25 +137,25 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
+    AsyncFunction<Boolean, Void> recheck = new AsyncFunction<Boolean, Void> () {
+      @Override
+      public ListenableFuture<Void> apply (Boolean completed) {
+        if (completed) {
+          LOGGER.debug("Pre-staging completed for {}", request.toString());
+          return Futures.immediateFuture(null);
+        } else {
+          LOGGER.debug("Rescheduling pre-stage request for {}", request.toString());
+          return Futures.transform(getPoller().schedule(task, period, TimeUnit.MINUTES), this);
+        }
+      }
+    };
+    
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply (Void ignored) throws CacheException {
         LOGGER.debug("Submitting pre-stage request for {}", request.toString());
-        final PreStageTask task = new PreStageTask(treqs, request);
-        return Futures.transform(getPoller().submit(task),
-            new AsyncFunction<Boolean, Void> () {
-              @Override
-              public ListenableFuture<Void> apply (Boolean completed) {
-                if (completed) {
-                  LOGGER.debug("Pre-staging completed for {}", request.toString());
-                  return Futures.immediateFuture(null);
-                } else {
-                  LOGGER.debug("Rescheduling pre-stage request for {}", request.toString());
-                  return Futures.transform(getPoller().schedule(task, period, TimeUnit.MINUTES), this);
-                }
-              }
-            }
-        );
+        task.call();
+        return Futures.transform(getPoller().submit(task), recheck);
       }
     };
     
