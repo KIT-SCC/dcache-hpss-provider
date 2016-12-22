@@ -45,18 +45,6 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       this.name = name;
   }
 
-  protected ListeningExecutorService getMover () {
-    return mover;
-  }
-
-  protected ListeningExecutorService getCleaner () {
-    return cleaner;
-  }
-
-  protected ListeningScheduledExecutorService getPoller () {
-    return poller;
-  }
-  
   @Override
   public synchronized void configure (Map<String, String> properties) throws IllegalArgumentException {
     LOGGER.debug("Configuring HSM interface '{}' with type '{}'.", name, type);
@@ -102,7 +90,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   
   @Override
   public ListenableFuture<Void> remove (final RemoveRequest request) {
-    return getCleaner().submit(new RemoveTask(request, mountpoint));
+    return cleaner.submit(new RemoveTask(request, mountpoint));
   }
   
   @Override
@@ -111,7 +99,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     return Futures.transform(request.activate(),
         new AsyncFunction<Void, Set<URI>> () {
           public ListenableFuture<Set<URI>> apply (Void ignored) throws CacheException, URISyntaxException {
-            return getMover().submit(task);
+            return mover.submit(task);
           }
         }
     );
@@ -145,7 +133,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
           return Futures.immediateFuture(null);
         } else {
           LOGGER.debug("Rescheduling pre-stage request for {}", request.toString());
-          return Futures.transform(getPoller().schedule(task, period, TimeUnit.MINUTES), this);
+          return Futures.transform(poller.schedule(task, period, TimeUnit.MINUTES), this);
         }
       }
     };
@@ -155,7 +143,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       public ListenableFuture<Void> apply (Void ignored) throws CacheException {
         LOGGER.debug("Submitting pre-stage request for {}", request.toString());
         task.call();
-        return Futures.transform(getPoller().submit(task), recheck);
+        return Futures.transform(poller.submit(task), recheck);
       }
     };
     
@@ -163,7 +151,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       @Override
       public ListenableFuture<Set<Checksum>> apply (Void ignored) throws Exception {
         LOGGER.debug("Submitting stage request for {}", request.toString());
-        return getMover().submit(new StageTask(request, mountpoint));
+        return mover.submit(new StageTask(request, mountpoint));
       }
     };
     
