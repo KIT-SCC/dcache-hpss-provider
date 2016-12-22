@@ -42,19 +42,19 @@ class FlushTask implements Callable<Set<URI>> {
       pnfsId
     );
     this.externalPath = Paths.get(mountpoint, hsmPath);
-    LOGGER.trace(String.format("FlushTask %s has to copy %s to %s.", request.toString(), path, externalPath));
+    LOGGER.trace("FlushTask {} has to copy {} to {}.", request.toString(), path, externalPath);
   }
   
   public Set<URI> call () throws CacheException, URISyntaxException {
     try {
-      LOGGER.debug(String.format("Copy %s to %s.", path, externalPath));
+      LOGGER.debug("Copy {} to {}.", path, externalPath);
       Files.copy(path, externalPath, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
       throw new CacheException(2, "Copy to " + externalPath.toString() + " failed.", e);
     }
     
     URI uri = new URI(type, name, hsmPath, null, null);
-    LOGGER.debug(String.format("Return after successful copy of %s to %s: %s", path, externalPath, uri.toString()));
+    LOGGER.debug("Return after successful copy of {} to {}: {}", path, externalPath, uri.toString());
     return Collections.singleton(uri);
   }
 }

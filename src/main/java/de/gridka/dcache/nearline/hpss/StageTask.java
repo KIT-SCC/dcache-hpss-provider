@@ -22,7 +22,7 @@ class StageTask implements Callable<Set<Checksum>> {
   private Path externalPath;
   
   public StageTask(StageRequest request, String mountpoint) {
-    LOGGER.trace(String.format("Create new StageTask for %s.", request.toString()));
+    LOGGER.debug("Create new StageTask for {}.", request.toString());
     FileAttributes fileAttributes = request.getFileAttributes();
     String pnfsId = fileAttributes.getPnfsId().toString();
     this.path = request.getFile().toPath();
@@ -34,12 +34,12 @@ class StageTask implements Callable<Set<Checksum>> {
         pnfsId
       );
     this.externalPath = Paths.get(mountpoint, hsmPath);
-    LOGGER.trace(String.format("StageTask %s has to copy %s to %s.", request.toString(), externalPath, path));
+    LOGGER.debug("StageTask {} has to copy {} to {}.", request.toString(), externalPath, path);
   }
   
   public Set<Checksum> call () throws CacheException {
     try {
-      LOGGER.debug(String.format("Copy %s to %s.", externalPath, path));
+      LOGGER.debug("Copy {} to {}.", externalPath, path);
       Files.copy(externalPath, path);
     } catch (IOException e) {
       throw new CacheException(2, "Copy to " + externalPath.toString() + " failed.", e);

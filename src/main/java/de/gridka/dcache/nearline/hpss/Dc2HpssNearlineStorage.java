@@ -110,13 +110,13 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   
   @Override
   public ListenableFuture<Set<Checksum>> stage (final StageRequest request) {
-    LOGGER.debug("Activating request " + request.toString());
+    LOGGER.debug("Activating request {}", request.toString());
     ListenableFuture<Void> activation = request.activate();
     
     AsyncFunction<Void, Void> allocation = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply (Void ignored) throws Exception {
-        LOGGER.debug("Allocating space for " + request.toString());
+        LOGGER.debug("Allocating space for {}", request.toString());
         return request.allocate();
       }
     };
@@ -124,18 +124,20 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply (Void ignored) throws CacheException {
-        LOGGER.debug("Submitting pre-stage request for " + request.toString());
+        LOGGER.debug("Submitting pre-stage request for {}", request.toString());
         return getPoller().submit(new PreStageTask(treqs, getPoller(), request), ignored);
       }
     };
     
-    try {
-      Futures.transform(Futures.transform(activation, allocation), prestaging).get();
-    } catch (InterruptedException | ExecutionException e) {
-      LOGGER.error("Prestaging failed.", new Throwable(e));
-      return Futures.immediateFailedFuture(new Throwable(e));
-    }
-    return getMover().submit(new StageTask(request, mountpoint));
+    AsyncFunction<Void, Set<Checksum>> staging = new AsyncFunction<Void, Set<Checksum>> () {
+      @Override
+      public ListenableFuture<Set<Checksum>> apply (Void ignored) throws Exception {
+        LOGGER.debug("Submitting stage request for {}", request.toString());
+        return getMover().submit(new StageTask(request, mountpoint));
+      }
+    };
+    
+    return Futures.transform(Futures.transform(Futures.transform(activation, allocation), prestaging), staging);
   }
   
   @Override

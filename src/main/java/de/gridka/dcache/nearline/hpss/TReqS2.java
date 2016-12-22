@@ -23,7 +23,7 @@ public class TReqS2 {
     this.treqsStaging = String.format("http://%s:%s/treqs2/staging", server, port);
     this.user = user;
     this.password = password;
-    LOGGER.debug("Generated TReqS connectivity string %s", treqsStaging);
+    LOGGER.debug("Generated TReqS connectivity string {}", treqsStaging);
   }
   
   public String initRecall (String hsmPath) throws CacheException {
@@ -43,26 +43,26 @@ public class TReqS2 {
       throw new CacheException(String.format("Failed to initialize recall for %s with TReqS.\n%s", hsmPath, response.getStatusText()));
     }
     String id = response.getBody().getObject().getString("id");
-    LOGGER.debug(String.format("TReqS created request for %s with id '%s'.", hsmPath, id));
+    LOGGER.debug("TReqS created request for {} with id '{}'.", hsmPath, id);
     
     return id;
   }
 
   public JSONObject getStatus (String requestId) {
-    LOGGER.debug(String.format("Query status for request '%s'", requestId));
+    LOGGER.debug("Query status for request '{}'", requestId);
     try {
       return Unirest.get(treqsStaging + "/request/" + requestId)
           .basicAuth(user, password)
           .header("accept", "application/json")
           .asJson().getBody().getObject();
     } catch (UnirestException e) {
-      LOGGER.error(String.format("Query status of %s failed", requestId), e);
+      LOGGER.error("Query status of " + requestId + " failed", e);
       return null;
     }
   }
 
   public void cancelRecall (String hsmPath) {
-    LOGGER.debug(String.format("Cancel TReqS requests for %s.", hsmPath));
+    LOGGER.debug("Cancel TReqS requests for {}.", hsmPath);
     Unirest.delete(treqsStaging + "/file/" + hsmPath).basicAuth(user, password);
   }
   

@@ -25,7 +25,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
   private String requestId;
   
   PreStageTask (TReqS2 treqs, ListeningScheduledExecutorService poller, StageRequest request) throws CacheException {
-    LOGGER.debug(String.format("Create new PreStageTask for %s.", request.toString()));
+    LOGGER.debug("Create new PreStageTask for {}.", request.toString());
     this.treqs = treqs;
     this.poller = poller;
     
@@ -38,38 +38,38 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
         pnfsId
       );
 
-    LOGGER.debug(String.format("PreStageTask for %s has to bring online %s.", request.toString(), hsmPath));
+    LOGGER.debug("PreStageTask for {} has to bring online {}.", request.toString(), hsmPath);
     this.requestId = treqs.initRecall(hsmPath);
-    LOGGER.debug(String.format("Received %s for PreStageTask of %s", requestId, hsmPath));
+    LOGGER.debug("Received %s for PreStageTask of {}", requestId, hsmPath);
   }
   
   public synchronized void run() {
     try {
       if (!isDone()) {
-        LOGGER.debug(String.format("Query status for %s.", requestId));
+        LOGGER.debug("Query status for {}.", requestId);
         JSONObject status = treqs.getStatus(requestId);
         if (status != null && status.getString("status") == "ENDED") {
-          LOGGER.debug(String.format("Request %s has ENDED.", requestId));
+          LOGGER.debug("Request {} has ENDED.", requestId);
           String subStatus = status.getString("sub_status");
           if (subStatus == "FAILED") {
-            LOGGER.debug(String.format("Request %s has FAILED.", requestId));
+            LOGGER.debug("Request {} has FAILED.", requestId);
             String error = status.getJSONObject("file").getString("error_message");
             throw new CacheException(30, error);
           } else if (subStatus == "CANCELLED") {
-            LOGGER.debug(String.format("Request %s was CANCELLED.", requestId));
+            LOGGER.debug("Request {} was CANCELLED.", requestId);
             throw new CancellationException("Request was cancelled by TReqS.");
           } else if (subStatus == "SUCCEEDED") {
-            LOGGER.debug(String.format("Request %s was SUCCESSFUL.", requestId));
+            LOGGER.debug("Request {} was SUCCESSFUL.", requestId);
             set(null);
           }
         } else {
-          LOGGER.debug(String.format("Request %s is in status %s and will be rescheduled.", requestId, status.getString("status")));
+          LOGGER.debug("Request {} is in status{} and will be rescheduled.", requestId, status.getString("status"));
           future = poller.schedule(this, 2, TimeUnit.MINUTES);
         }
       }
     } catch (Exception e) {
       try {
-        LOGGER.debug(String.format("Cancelling PreStageTask for %s.", hsmPath));
+        LOGGER.debug("Cancelling PreStageTask for {}.", hsmPath);
         this.cancel();
       } catch (Exception suppressed) {
         e.addSuppressed(suppressed);
@@ -82,7 +82,7 @@ public class PreStageTask extends AbstractFuture<Void> implements Runnable {
     if (isDone()) {
       return false;
     }
-    LOGGER.debug(String.format("Order TReqQs to cancel %s for %s.", requestId, hsmPath));
+    LOGGER.debug("Order TReqQs to cancel {} for {}.", requestId, hsmPath);
     treqs.cancelRecall(hsmPath);
     future.cancel(true);
     return true;

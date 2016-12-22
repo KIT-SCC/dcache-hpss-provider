@@ -19,13 +19,13 @@ public class RemoveTask implements Callable<Void> {
   RemoveTask (RemoveRequest request, String mountpoint) {
     String hsmPath = request.getUri().getPath();
     this.externalPath = Paths.get(mountpoint, hsmPath);
-    LOGGER.trace(String.format("Created RemoveTask for %s.", externalPath));
+    LOGGER.debug("Created RemoveTask for {}.", externalPath);
   }
   
   public Void call () throws CacheException {
     
     try {
-      LOGGER.debug(String.format("Deleting %s.", externalPath));
+      LOGGER.debug("Deleting {}.", externalPath);
       Files.delete(externalPath);
     } catch (IOException e) {
       throw new CacheException("Deletion of " + externalPath.toString() + " failed.", e);
