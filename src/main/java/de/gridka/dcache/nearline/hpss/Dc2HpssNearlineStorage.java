@@ -134,6 +134,9 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
         if (completed) {
           LOGGER.debug("Pre-staging completed for {}", request.toString());
           return Futures.immediateFuture(null);
+        } else if (task.isCancelled()) {
+          LOGGER.debug("Pre-staging for {} has been cancelled.", request.toString());
+          return Futures.immediateCancelledFuture();
         } else {
           LOGGER.debug("Rescheduling pre-stage request for {}", request.toString());
           return Futures.transform(poller.schedule(task, period, TimeUnit.MINUTES), this);
