@@ -17,13 +17,14 @@ import diskCacheV111.util.CacheException;
 public class PreStageTask extends AbstractFuture<Void> implements Callable<Boolean> {
   private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
   TReqS2 treqs;
-  private ListenableScheduledFuture<?> future;
+  private StageRequest future;
   private String hsmPath;
   private String requestId;
   
   PreStageTask (TReqS2 treqs, StageRequest request) throws CacheException {
     LOGGER.debug("Create new PreStageTask for {}.", request.toString());
     this.treqs = treqs;
+    this.future = request;
     
     FileAttributes fileAttributes = request.getFileAttributes();
     String pnfsId = fileAttributes.getPnfsId().toString();
@@ -61,11 +62,12 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
           }
         } else {
           LOGGER.debug("Request {} is in status {} and will be rescheduled.", requestId, status.getString("status"));
-          return false;
         }
       }
     } catch (Exception e) {
       try {
+        LOGGER.debug("Cancelling dCache's StageRequest");
+        future.failed(e);
         LOGGER.debug("Cancelling PreStageTask for {}.", hsmPath);
         this.cancel();
       } catch (Exception suppressed) {
@@ -82,7 +84,6 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
     }
     LOGGER.debug("Order TReqS to cancel {} for {}.", requestId, hsmPath);
     treqs.cancelRecall(requestId);
-    future.cancel(true);
     return true;
   }
 }
