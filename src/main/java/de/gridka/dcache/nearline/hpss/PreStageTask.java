@@ -80,8 +80,8 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
     if (isDone()) {
       return false;
     }
-    LOGGER.debug("Order TReqQs to cancel {} for {}.", requestId, hsmPath);
-    treqs.cancelRecall(hsmPath);
+    LOGGER.debug("Order TReqS to cancel {} for {}.", requestId, hsmPath);
+    treqs.cancelRecall(requestId);
     future.cancel(true);
     return true;
   }
