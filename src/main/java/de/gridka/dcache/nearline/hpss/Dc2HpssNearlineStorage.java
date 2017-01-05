@@ -44,7 +44,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       this.type = type;
       this.name = name;
   }
-
+  
   @Override
   public synchronized void configure (Map<String, String> properties) throws IllegalArgumentException {
     LOGGER.debug("Configuring HSM interface '{}' with type '{}'.", name, type);
@@ -148,7 +148,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     // so we can chain staging after it.
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
-      public ListenableFuture<Void> apply (Void ignored) throws CacheException {
+      public ListenableFuture<Void> apply (Void ignored) throws Exception {
         LOGGER.debug("Submitting pre-stage request for {}", request.toString());
         task.call();
         return Futures.transform(poller.submit(task), recheck);

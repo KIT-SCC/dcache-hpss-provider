@@ -10,21 +10,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableScheduledFuture;
 
 import diskCacheV111.util.CacheException;
 
 public class PreStageTask extends AbstractFuture<Void> implements Callable<Boolean> {
   private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
   TReqS2 treqs;
-  private StageRequest future;
   private String hsmPath;
   private String requestId;
   
   PreStageTask (TReqS2 treqs, StageRequest request) throws CacheException {
     LOGGER.debug("Create new PreStageTask for {}.", request.toString());
     this.treqs = treqs;
-    this.future = request;
     
     FileAttributes fileAttributes = request.getFileAttributes();
     String pnfsId = fileAttributes.getPnfsId().toString();
@@ -40,7 +37,8 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
     LOGGER.debug("Received {} for PreStageTask of {}", requestId, hsmPath);
   }
   
-  public synchronized Boolean call () {
+  @Override
+  public synchronized Boolean call () throws Exception {
     try {
       if (!isDone()) {
         LOGGER.debug("Query status for {}.", requestId);
@@ -66,14 +64,13 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
       }
     } catch (Exception e) {
       try {
-        LOGGER.debug("Cancelling dCache's StageRequest");
-        future.failed(e);
         LOGGER.debug("Cancelling PreStageTask for {}.", hsmPath);
         this.cancel();
       } catch (Exception suppressed) {
         e.addSuppressed(suppressed);
       }
       setException(e);
+      throw e;
     }
     return false;
   }
@@ -84,6 +81,8 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
     }
     LOGGER.debug("Order TReqS to cancel {} for {}.", requestId, hsmPath);
     treqs.cancelRecall(requestId);
+    // Set this AbstractFuture to be cancelled.
+    super.cancel(true);
     return true;
   }
 }
