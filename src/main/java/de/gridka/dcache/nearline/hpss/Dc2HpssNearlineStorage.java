@@ -108,14 +108,6 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     LOGGER.debug("Activating request {}", request.toString());
     // Signal the activation of the StageRequest to dCache.
     ListenableFuture<Void> activation = request.activate();
-    // Initialize the pre-staging.
-    PreStageTask task;
-    try {
-      task = new PreStageTask(treqs, request);
-    } catch (CacheException e) {
-      LOGGER.error("Creating the PreStageTask for " + request + " failed.", e);
-      return Futures.immediateFailedFuture(e);
-    }
     
     // Asynchronously allocate the disk space for the staging in dCache. 
     AsyncFunction<Void, Void> allocation = new AsyncFunction<Void, Void> () {
@@ -126,6 +118,8 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
+    PreStageTask task = new PreStageTask(type, name, treqs, request);
+
     // Check on the PreStageTask - when it is completed, return immediately,
     // otherwise schedule another recheck.
     AsyncFunction<Boolean, Void> recheck = new AsyncFunction<Boolean, Void> () {
@@ -144,13 +138,13 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
-    // Encapsulate the first and subsequent checks on the PreStageTask,
+    // Encapsulate the start and subsequent checks on the PreStageTask,
     // so we can chain staging after it.
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
-      public ListenableFuture<Void> apply (Void ignored) throws Exception {
+      public ListenableFuture<Void> apply (Void ignored) throws CacheException {
         LOGGER.debug("Submitting pre-stage request for {}", request.toString());
-        task.call();
+        task.start();
         return Futures.transform(poller.submit(task), recheck);
       }
     };

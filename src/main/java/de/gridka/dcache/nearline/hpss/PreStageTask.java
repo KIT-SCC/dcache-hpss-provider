@@ -1,11 +1,18 @@
 package de.gridka.dcache.nearline.hpss;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
+import java.util.stream.Collectors;
 
 import org.json.JSONObject;
 import org.dcache.pool.nearline.spi.StageRequest;
-import org.dcache.vehicles.FileAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,22 +26,27 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
   private String hsmPath;
   private String requestId;
   
-  PreStageTask (TReqS2 treqs, StageRequest request) throws CacheException {
-    LOGGER.debug("Create new PreStageTask for {}.", request.toString());
+  PreStageTask (String type, String name, TReqS2 treqs, StageRequest request) {
     this.treqs = treqs;
     
-    FileAttributes fileAttributes = request.getFileAttributes();
-    String pnfsId = fileAttributes.getPnfsId().toString();
-    this.hsmPath = String.format("/%s/%s/%s/%s",
-        fileAttributes.getStorageInfo().getKey("group"),
-        pnfsId.charAt(pnfsId.length() - 1),
-        pnfsId.charAt(pnfsId.length() - 2),
-        pnfsId
-      );
-
-    LOGGER.debug("PreStageTask for {} has to bring online {}.", request.toString(), hsmPath);
+    /* Get a list of all URIs for this file and filter them for
+     * matching HSM type and name. Usually, one single URI should remain.
+     */
+    this.hsmPath = request.getFileAttributes()
+                          .getStorageInfo()
+                          .locations()
+                          .stream()
+                          .filter(uri -> uri.getScheme().equals(type))
+                          .filter(uri -> uri.getAuthority().equals(name))
+                          .collect(Collectors.toList())
+                          .get(0)
+                          .getPath();
+    LOGGER.debug("New PreStageTask {} to bring online {}.", request.getId(), hsmPath);
+  }
+  
+  public void start () throws CacheException {
     this.requestId = treqs.initRecall(hsmPath);
-    LOGGER.debug("Received {} for PreStageTask of {}", requestId, hsmPath);
+    LOGGER.debug("Received {} for PreStageTask {} from TReqS.", requestId);
   }
   
   @Override
