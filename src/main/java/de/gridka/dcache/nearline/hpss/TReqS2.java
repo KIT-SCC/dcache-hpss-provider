@@ -61,9 +61,9 @@ public class TReqS2 {
     }
   }
 
-  public void cancelRecall (String hsmPath) {
-    LOGGER.debug("Cancel TReqS requests for {}.", hsmPath);
-    Unirest.delete(treqsStaging + "/request/" + hsmPath).basicAuth(user, password);
+  public void cancelRecall (String requestId) {
+    LOGGER.debug("Cancel TReqS requests for {}.", requestId);
+    Unirest.delete(treqsStaging + "/request/" + requestId).basicAuth(user, password);
   }
   
   public void disconnect () {

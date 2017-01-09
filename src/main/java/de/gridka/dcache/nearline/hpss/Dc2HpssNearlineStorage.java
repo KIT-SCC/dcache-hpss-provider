@@ -164,7 +164,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
-    return Futures.transform(Futures.transform(Futures.transform(activation, allocation), prestaging), staging);
+    return Futures.transform(Futures.transform(Futures.transform(activation, prestaging), allocation), staging);
   }
   
   @Override
