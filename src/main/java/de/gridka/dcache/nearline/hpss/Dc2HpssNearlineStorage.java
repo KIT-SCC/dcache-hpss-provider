@@ -77,6 +77,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
           break;
         case "hpssRoot":
           this.hpssRoot = entry.getValue();
+          break;
         case "copies":
           try {
             this.mover = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(Integer.parseInt(entry.getValue())));
@@ -138,7 +139,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       }
     };
     
-    PreStageTask task = new PreStageTask(type, name, treqs, request);
+    PreStageTask task = new PreStageTask(type, name, treqs, request, hpssRoot);
 
     // Check on the PreStageTask - when it is completed, return immediately,
     // otherwise schedule another recheck.

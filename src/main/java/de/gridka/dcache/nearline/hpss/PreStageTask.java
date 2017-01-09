@@ -1,12 +1,5 @@
 package de.gridka.dcache.nearline.hpss;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.stream.Collectors;
@@ -26,21 +19,21 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
   private String hsmPath;
   private String requestId;
   
-  PreStageTask (String type, String name, TReqS2 treqs, StageRequest request) {
+  PreStageTask (String type, String name, TReqS2 treqs, StageRequest request, String hpssRoot) {
     this.treqs = treqs;
     
     /* Get a list of all URIs for this file and filter them for
      * matching HSM type and name. Usually, one single URI should remain.
      */
-    this.hsmPath = request.getFileAttributes()
-                          .getStorageInfo()
-                          .locations()
-                          .stream()
-                          .filter(uri -> uri.getScheme().equals(type))
-                          .filter(uri -> uri.getAuthority().equals(name))
-                          .collect(Collectors.toList())
-                          .get(0)
-                          .getPath();
+    this.hsmPath = hpssRoot + request.getFileAttributes()
+                                     .getStorageInfo()
+                                     .locations()
+                                     .stream()
+                                     .filter(uri -> uri.getScheme().equals(type))
+                                     .filter(uri -> uri.getAuthority().equals(name))
+                                     .collect(Collectors.toList())
+                                     .get(0)
+                                     .getPath();
     LOGGER.debug("New PreStageTask {} to bring online {}.", request.getId(), hsmPath);
   }
   
