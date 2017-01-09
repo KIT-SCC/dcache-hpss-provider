@@ -14,7 +14,7 @@ import com.mashape.unirest.http.exceptions.UnirestException;
 import diskCacheV111.util.CacheException;
 
 public class TReqS2 {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TReqS2.class);
   private String treqsStaging;
   private String user;
   private String password;

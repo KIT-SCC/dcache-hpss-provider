@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import diskCacheV111.util.CacheException;
 
 class FlushTask implements Callable<Set<URI>> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(FlushTask.class);
   private String type;
   private String name;
   private Path path;

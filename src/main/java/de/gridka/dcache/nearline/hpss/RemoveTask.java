@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import diskCacheV111.util.CacheException;
 
 public class RemoveTask implements Callable<Void> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(RemoveTask.class);
   private Path externalPath;
   
   RemoveTask (RemoveRequest request, String mountpoint) {

@@ -160,7 +160,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       @Override
       public ListenableFuture<Set<Checksum>> apply (Void ignored) throws Exception {
         LOGGER.debug("Submitting stage request for {}", request.toString());
-        return mover.submit(new StageTask(request, mountpoint));
+        return mover.submit(new StageTask(type, name, request, mountpoint));
       }
     };
     

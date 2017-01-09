@@ -14,7 +14,7 @@ import com.google.common.util.concurrent.AbstractFuture;
 import diskCacheV111.util.CacheException;
 
 public class PreStageTask extends AbstractFuture<Void> implements Callable<Boolean> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(Dc2HpssNearlineStorage.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(PreStageTask.class);
   TReqS2 treqs;
   private String hsmPath;
   private String requestId;
