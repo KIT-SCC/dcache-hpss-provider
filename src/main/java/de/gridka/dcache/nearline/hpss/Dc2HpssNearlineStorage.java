@@ -33,11 +33,13 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   private final String type;
   private final String name;
   private volatile String mountpoint = null;
+  private volatile String hpssRoot = "/";
+  // A default 120 seconds delay for scheduled tasks on poller.
+  private volatile int period = 120;
   private TReqS2 treqs = null;
   private volatile ListeningExecutorService mover;
   private volatile ListeningExecutorService cleaner = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
   private volatile ListeningScheduledExecutorService poller = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
-  private int period;
 
   public Dc2HpssNearlineStorage(String type, String name)
   {
@@ -48,42 +50,60 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   @Override
   public synchronized void configure (Map<String, String> properties) throws IllegalArgumentException {
     LOGGER.debug("Configuring HSM interface '{}' with type '{}'.", name, type);
-
-    String mnt = properties.get("mountpoint");
-    if (mnt != null) {
-      checkArgument(Files.isDirectory(Paths.get(mnt)), mnt + " is not a directory!");
-      this.mountpoint = mnt;
-      LOGGER.debug("Set mountpoint to {}.", mnt);
-    } else {
-      checkArgument(mountpoint != null, "mountpoint attribute is required!");
+    
+    String treqsHost = null;
+    String treqsPort = "8080";
+    String treqsUser = "treqs";
+    String treqsPassword = "changeit";
+    
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      switch (entry.getKey()) {
+        case "mountpoint":
+          checkArgument(Files.isDirectory(Paths.get(entry.getValue())), entry.getValue() + " is not a directory!");
+          this.mountpoint = entry.getValue();
+          LOGGER.debug("Set mountpoint to {}.", mountpoint);
+          break;
+        case "treqsHost":
+          treqsHost = entry.getValue();
+          break;
+        case "treqsPort":
+          treqsPort = entry.getValue();
+          break;
+        case "treqsUser":
+          treqsUser = entry.getValue();
+          break;
+        case "treqsPassword":
+          treqsPassword = entry.getValue();
+          break;
+        case "hpssRoot":
+          this.hpssRoot = entry.getValue();
+        case "copies":
+          try {
+            this.mover = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(Integer.parseInt(entry.getValue())));
+          } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("copies is not assigned an integer number!", e);
+          }
+          break;
+        case "period":
+          try {
+            this.period = Integer.parseInt(entry.getValue());
+          } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("period is not assigned an integer number!", e);
+          }
+          break;
+        default:
+          LOGGER.warn("Property '{}' has no effect on HSM interface '{}'.", entry.getKey(), name);
+      }
     }
     
-    String treqsHost = properties.get("treqsHost");
-    String treqsPort = properties.getOrDefault("treqsPort", "8080");
-    String treqsUser = properties.getOrDefault("treqsUser", "treqs");
-    String treqsPassword = properties.getOrDefault("treqsPassword", "changeit");
+    checkArgument(mountpoint != null, "mountpoint attribute is required!");
+
     if (treqsHost != null) {
       this.treqs = new TReqS2(treqsHost, treqsPort, treqsUser, treqsPassword);
       LOGGER.debug("Created TReqS server {}.", treqsHost);
     } else {
-      checkArgument(treqs != null, "treqsHost attribute is required!");
+      checkArgument(treqs != null, "treqsHost property is required!");
     }
-      
-    String copies = properties.getOrDefault("copies", "5");
-    try {
-      this.mover = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(Integer.parseInt(copies)));
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("copies is not assigned an integer number!", e);
-    }
-    
-    // A default 2 minute delay for scheduled tasks on poller.
-    String delay = properties.getOrDefault("period", "2");
-    try {
-      this.period = Integer.parseInt(delay);
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("period is not assigned an integer number!", e);
-    }
-    
   }
   
   @Override
@@ -133,7 +153,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
           return Futures.immediateCancelledFuture();
         } else {
           LOGGER.debug("Rescheduling pre-stage request for {}", request.toString());
-          return Futures.transform(poller.schedule(task, period, TimeUnit.MINUTES), this);
+          return Futures.transform(poller.schedule(task, period, TimeUnit.SECONDS), this);
         }
       }
     };
