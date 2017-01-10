@@ -27,7 +27,7 @@ public class TReqS2 {
   }
   
   public String initRecall (String hsmPath) throws CacheException {
-    LOGGER.debug(String.format("Send stage request for %s to TReqS.", hsmPath));
+    LOGGER.debug("Send stage request for {} to TReqS.", hsmPath);
     HttpResponse<JsonNode> response;
     try {
       response = Unirest.post(treqsStaging + "/request")
@@ -40,7 +40,7 @@ public class TReqS2 {
       throw new CacheException(String.format("Submit recall for %s to TReqS failed.", hsmPath), e);
     }
     if (response.getStatus() < 200 || response.getStatus() > 299) {
-      throw new CacheException(String.format("Failed to initialize recall for %s with TReqS.\n%s", hsmPath, response.getStatusText()));
+      throw new CacheException(String.format("Failed to initialize recall for %s with TReqS: %s", hsmPath, response.getStatusText()));
     }
     String id = response.getBody().getObject().getString("id");
     LOGGER.debug("TReqS created request for {} with id '{}'.", hsmPath, id);
@@ -49,7 +49,7 @@ public class TReqS2 {
   }
 
   public JSONObject getStatus (String requestId) {
-    LOGGER.debug("Query status for request '{}'", requestId);
+    LOGGER.debug("Query status of {}", requestId);
     try {
       return Unirest.get(treqsStaging + "/request/" + requestId)
           .basicAuth(user, password)

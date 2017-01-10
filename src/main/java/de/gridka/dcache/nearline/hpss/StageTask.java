@@ -22,7 +22,7 @@ class StageTask implements Callable<Set<Checksum>> {
   private Path externalPath;
   
   public StageTask (String type, String name, StageRequest request, String mountpoint) {
-    LOGGER.debug("Create new StageTask for {}.", request.toString());
+    LOGGER.debug("Create new StageTask for {}.", request.getFile().getName());
     
     this.path = request.getFile().toPath();
     /* Get a list of all URIs for this file and filter them for

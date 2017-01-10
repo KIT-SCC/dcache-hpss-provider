@@ -34,12 +34,12 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
                                      .collect(Collectors.toList())
                                      .get(0)
                                      .getPath();
-    LOGGER.debug("New PreStageTask {} to bring online {}.", request.getId(), hsmPath);
+    LOGGER.debug("New PreStageTask to bring online {}.", request.getId(), hsmPath);
   }
   
   public void start () throws CacheException {
     this.requestId = treqs.initRecall(hsmPath);
-    LOGGER.debug("Received {} for PreStageTask {} from TReqS.", requestId);
+    LOGGER.debug("Received {} from TReqS for PreStageTask of {}.", requestId, hsmPath);
   }
   
   @Override
@@ -64,12 +64,12 @@ public class PreStageTask extends AbstractFuture<Void> implements Callable<Boole
               return true;
           }
         } else {
-          LOGGER.debug("Request {} is in status {} and will be rescheduled.", requestId, status.getString("status"));
+          LOGGER.debug("Request {} is in status {}, reschedule another query.", requestId, status.getString("status"));
         }
       }
     } catch (Exception e) {
       try {
-        LOGGER.debug("Cancelling PreStageTask for {}.", hsmPath);
+        LOGGER.debug("Cancelling PreStageTask {} for {}.", requestId, hsmPath);
         this.cancel();
       } catch (Exception suppressed) {
         e.addSuppressed(suppressed);

@@ -126,7 +126,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   
   @Override
   public ListenableFuture<Set<Checksum>> stage (final StageRequest request) {
-    LOGGER.debug("Activating request {}", request.toString());
+    String pnfsId = request.getFile().getName();
     // Signal the activation of the StageRequest to dCache.
     ListenableFuture<Void> activation = request.activate();
     
@@ -134,7 +134,6 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     AsyncFunction<Void, Void> allocation = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply (Void ignored) throws Exception {
-        LOGGER.debug("Allocating space for {}", request.toString());
         return request.allocate();
       }
     };
@@ -147,13 +146,13 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       @Override
       public ListenableFuture<Void> apply (Boolean completed) {
         if (completed) {
-          LOGGER.debug("Pre-staging completed for {}", request.toString());
+          LOGGER.debug("Pre-staging completed for {}", pnfsId);
           return Futures.immediateFuture(null);
         } else if (task.isCancelled()) {
-          LOGGER.debug("Pre-staging for {} has been cancelled.", request.toString());
+          LOGGER.debug("Pre-staging for {} has been cancelled.", pnfsId);
           return Futures.immediateCancelledFuture();
         } else {
-          LOGGER.debug("Rescheduling pre-stage request for {}", request.toString());
+          LOGGER.debug("Rescheduling pre-stage request for {}", pnfsId);
           return Futures.transform(poller.schedule(task, period, TimeUnit.SECONDS), this);
         }
       }
@@ -164,9 +163,9 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     AsyncFunction<Void, Void> prestaging = new AsyncFunction<Void, Void> () {
       @Override
       public ListenableFuture<Void> apply (Void ignored) throws CacheException {
-        LOGGER.debug("Submitting pre-stage request for {}", request.toString());
+        LOGGER.debug("Submitting pre-stage request for {}", pnfsId);
         task.start();
-        return Futures.transform(poller.submit(task), recheck);
+        return Futures.transform(poller.schedule(task, period, TimeUnit.SECONDS), recheck);
       }
     };
     
@@ -174,7 +173,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
     AsyncFunction<Void, Set<Checksum>> staging = new AsyncFunction<Void, Set<Checksum>> () {
       @Override
       public ListenableFuture<Set<Checksum>> apply (Void ignored) throws Exception {
-        LOGGER.debug("Submitting stage request for {}", request.toString());
+        LOGGER.debug("Submitting stage request for {}", pnfsId);
         return mover.submit(new StageTask(type, name, request, mountpoint));
       }
     };
