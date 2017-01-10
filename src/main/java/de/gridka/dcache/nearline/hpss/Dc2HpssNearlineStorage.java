@@ -37,7 +37,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
   // A default 120 seconds delay for scheduled tasks on poller.
   private volatile int period = 120;
   private TReqS2 treqs = null;
-  private volatile ListeningExecutorService mover;
+  private volatile ListeningExecutorService mover = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(5));
   private volatile ListeningExecutorService cleaner = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(1));
   private volatile ListeningScheduledExecutorService poller = MoreExecutors.listeningDecorator(Executors.newScheduledThreadPool(1));
 
@@ -174,7 +174,7 @@ public class Dc2HpssNearlineStorage extends ListeningNearlineStorage {
       @Override
       public ListenableFuture<Set<Checksum>> apply (Void ignored) throws Exception {
         LOGGER.debug("Submitting stage request for {}", pnfsId);
-        return mover.submit(new StageTask(type, name, request, mountpoint));
+        return mover.submit(new StageTask(type, name, request, mountpoint));          
       }
     };
     
