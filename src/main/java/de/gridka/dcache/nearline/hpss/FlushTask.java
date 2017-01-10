@@ -35,10 +35,9 @@ class FlushTask implements Callable<Set<URI>> {
     String pnfsId = fileAttributes.getPnfsId().toString();
     this.path = request.getFile().toPath();
     
-    this.hsmPath = String.format("/%s/%s/%s/%s",
+    this.hsmPath = String.format("/%s/%s/%s",
       fileAttributes.getStorageInfo().getKey("group"),
-      pnfsId.charAt(pnfsId.length() - 1),
-      pnfsId.charAt(pnfsId.length() - 2),
+      pnfsId.substring(pnfsId.length() - 2),
       pnfsId
     );
     this.externalPath = Paths.get(mountpoint, hsmPath);
@@ -50,7 +49,12 @@ class FlushTask implements Callable<Set<URI>> {
       LOGGER.debug("Copy {} to {}.", path, externalPath);
       Files.copy(path, externalPath, StandardCopyOption.REPLACE_EXISTING);
     } catch (IOException e) {
-      throw new CacheException(2, "Copy to " + externalPath.toString() + " failed.", e);
+      /* TODO: Catch the exceptions for when...
+       *    - The source file cannot be read.
+       *    - The destination doesn't exist.
+       *    - No space left on the destination partition. 
+       */
+      throw new CacheException(31, "Copy to " + externalPath.toString() + " failed.", e);
     }
     
     URI uri = new URI(type, name, hsmPath, null, null);

@@ -46,7 +46,10 @@ class StageTask implements Callable<Set<Checksum>> {
       LOGGER.debug("Copy {} to {}.", externalPath, path);
       Files.copy(externalPath, path);
     } catch (IOException e) {
-      throw new CacheException(2, "Copy to " + externalPath.toString() + " failed.", e);
+      /* TODO: Catch the exceptions for when...
+       *    - The source file cannot be read. 
+       */
+      throw new CacheException(32, "Copy fo " + externalPath.toString() + " failed.", e);
     }
     
     return Collections.emptySet();
